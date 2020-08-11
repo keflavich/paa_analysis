@@ -21,7 +21,7 @@ tbl = Eso.query_surveys(surveys='VPHASplus', coord1=0, coord2=0, coord_sys='gal'
 files = Eso.retrieve_data(tbl['ARCFILE'])
 
 hdus = [fits.open(x) for x in glob.glob("ADP*.fits.fz") + glob.glob("*.fits")]
-hdus = [h for h in hdus if (260 < h[1].header['CRVAL1'] < 270)]
+hdus = [hdu for h in hdus for hdu in h if 'CRVAL1' in hdu.header and (260 < hdu.header['CRVAL1'] < 270)]
 #wcs_out, shape_out = find_optimal_celestial_wcs([h[1] for h in hdus], frame='galactic')
 
 wcs_out = wcs.WCS({"CTYPE1": "GLON-CAR",
@@ -37,5 +37,6 @@ wcs_out = wcs.WCS({"CTYPE1": "GLON-CAR",
                   })
 shape_out = (28000,28000)
 
-array_line, footprint = reproject_and_coadd([hdu for h in hdus for hdu in h[1:]], wcs_out, shape_out=shape_out, reproject_function=reproject_interp)
+# [hdu for h in hdus for hdu in h[1:]]
+array_line, footprint = reproject_and_coadd(hdus, wcs_out, shape_out=shape_out, reproject_function=reproject_interp)
 fits.PrimaryHDU(data=array_line, header=wcs_out.to_header()).writeto('gc_vphas_mosaic_halpha.fits', overwrite=True)
