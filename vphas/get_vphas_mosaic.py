@@ -13,12 +13,14 @@ from astropy.utils.console import ProgressBar
 
 from astroquery.eso import Eso
 
-Eso.ROW_LIMIT = 10000
-Eso.cache_location = '.'
-Eso.login()
+files = glob.glob("*ADP*fits*")
+if len(files) < 732:
+    Eso.ROW_LIMIT = 10000
+    Eso.cache_location = '.'
+    Eso.login()
 
-tbl = Eso.query_surveys(surveys='VPHASplus', coord1=0, coord2=0, coord_sys='gal', box=5*u.deg)
-files = Eso.retrieve_data(tbl['ARCFILE'])
+    tbl = Eso.query_surveys(surveys='VPHASplus', coord1=0, coord2=0, coord_sys='gal', box=5*u.deg)
+    files = Eso.retrieve_data(tbl['ARCFILE'])
 
 hdus = [fits.open(x) for x in glob.glob("ADP*.fits.fz") + glob.glob("*.fits")]
 hdus = [hdu for h in hdus for hdu in h if 'CRVAL1' in hdu.header and (260 < hdu.header['CRVAL1'] < 270)]
