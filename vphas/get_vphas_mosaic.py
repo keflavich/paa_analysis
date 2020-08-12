@@ -28,8 +28,10 @@ if len(files) < 732:
     tbl = Eso.query_surveys(surveys='VPHASplus', coord1=0, coord2=0, coord_sys='gal', box=5*u.deg)
     files = Eso.retrieve_data(tbl['ARCFILE'])
 
-hdus = [fits.open(x) for x in glob.glob("ADP*.fits.fz") + glob.glob("*.fits")]
-hdus = [hdu for h in hdus for hdu in h if 'CRVAL1' in hdu.header and (260 < hdu.header['CRVAL1'] < 270)]
+hdus = [hdu
+        for h in (fits.open(x)
+                  for x in glob.glob("ADP*.fits*"))
+        for hdu in h if 'CRVAL1' in hdu.header and (260 < hdu.header['CRVAL1'] < 270)]
 #wcs_out, shape_out = find_optimal_celestial_wcs([h[1] for h in hdus], frame='galactic')
 
 wcs_out = wcs.WCS({"CTYPE1": "GLON-CAR",
@@ -53,18 +55,27 @@ header = wcs_out.to_header()
 header['BITPIX'] = -32
 header['NAXIS1'] = shape_out[0]
 header['NAXIS2'] = shape_out[0]
-header.tofile('gc_vphas_mosaic_halpha.fits')
-header.tofile('gc_vphas_mosaic_halpha_coverage.fits')
-
-with open('gc_vphas_mosaic_halpha.fits', 'rb+') as fobj:
-    fobj.seek(len(header.tostring()) + (shape_out[0] * shape_out[1] * 4) - 1)
-    fobj.write(b'\0')
-with open('gc_vphas_mosaic_halpha_coverage.fits', 'rb+') as fobj:
-    fobj.seek(len(header.tostring()) + (shape_out[0] * shape_out[1] * 4) - 1)
-    fobj.write(b'\0')
+if not os.path.exists('gc_vphas_mosaic_halpha.fits'):
+    header.tofile('gc_vphas_mosaic_halpha.fits')
+if not os.path.exists('gc_vphas_mosaic_halpha_coverage.fits'):
+    header.tofile('gc_vphas_mosaic_halpha_coverage.fits')
 
 output_file = fits.open('gc_vphas_mosaic_halpha.fits', mode='update')
+if output_file[0].data.shape != shape_out:
+    output_file.close()
+    with open('gc_vphas_mosaic_halpha.fits', 'rb+') as fobj:
+        fobj.seek(len(header.tostring()) + (shape_out[0] * shape_out[1] * 4) - 1)
+        fobj.write(b'\0')
+    output_file = fits.open('gc_vphas_mosaic_halpha.fits', mode='update')
+
 output_coverage = fits.open('gc_vphas_mosaic_coverage.fits', mode='update')
+if output_coverage[0].data.shape != shape_out:
+    output_coverage.close()
+    with open('gc_vphas_mosaic_halpha_coverage.fits', 'rb+') as fobj:
+        fobj.seek(len(header.tostring()) + (shape_out[0] * shape_out[1] * 4) - 1)
+        fobj.write(b'\0')
+    output_coverage = fits.open('gc_vphas_mosaic_coverage.fits', mode='update')
+
 
 final_array = output_file[0].data
 final_footprint = output_coverage[0].data
