@@ -60,21 +60,21 @@ if not os.path.exists('gc_vphas_mosaic_halpha.fits'):
 if not os.path.exists('gc_vphas_mosaic_halpha_coverage.fits'):
     header.tofile('gc_vphas_mosaic_halpha_coverage.fits')
 
-output_file = fits.open('gc_vphas_mosaic_halpha.fits', mode='update')
+output_file = fits.open('gc_vphas_mosaic_halpha.fits', mode='update', output_verify='fix')
 if output_file[0].data.shape != shape_out:
     output_file.close()
     with open('gc_vphas_mosaic_halpha.fits', 'rb+') as fobj:
         fobj.seek(len(header.tostring()) + (shape_out[0] * shape_out[1] * 4) - 1)
         fobj.write(b'\0')
-    output_file = fits.open('gc_vphas_mosaic_halpha.fits', mode='update')
+    output_file = fits.open('gc_vphas_mosaic_halpha.fits', mode='update', output_verify='fix')
 
-output_coverage = fits.open('gc_vphas_mosaic_halpha_coverage.fits', mode='update')
+output_coverage = fits.open('gc_vphas_mosaic_halpha_coverage.fits', mode='update', output_verify='fix')
 if output_coverage[0].data.shape != shape_out:
     output_coverage.close()
     with open('gc_vphas_mosaic_halpha_coverage.fits', 'rb+') as fobj:
         fobj.seek(len(header.tostring()) + (shape_out[0] * shape_out[1] * 4) - 1)
         fobj.write(b'\0')
-    output_coverage = fits.open('gc_vphas_mosaic_halpha_coverage.fits', mode='update')
+    output_coverage = fits.open('gc_vphas_mosaic_halpha_coverage.fits', mode='update', output_verify='fix')
 
 
 final_array = output_file[0].data
