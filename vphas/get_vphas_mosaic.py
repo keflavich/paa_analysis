@@ -79,8 +79,8 @@ if output_coverage[0].data.shape != shape_out:
     output_coverage = fits.open('gc_vphas_mosaic_halpha_coverage.fits', mode='update', output_verify='fix')
 
 
-final_array.header.update(wcs_out.to_header())
-final_array_footprint.header.update(wcs_out.to_header())
+output_file[0].header.update(wcs_out.to_header())
+output_coverage[0].header.update(wcs_out.to_header())
 final_array = output_file[0].data
 final_footprint = output_coverage[0].data
 
