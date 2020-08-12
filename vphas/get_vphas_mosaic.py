@@ -51,14 +51,16 @@ shape_out = (28000,28000)
 #array_line, footprint = reproject_and_coadd(hdus, wcs_out, shape_out=shape_out, reproject_function=reproject_interp)
 #fits.PrimaryHDU(data=array_line, header=wcs_out.to_header()).writeto('gc_vphas_mosaic_halpha.fits', overwrite=True)
 
-header = wcs_out.to_header()
-header['BITPIX'] = -32
+hdu = fits.PrimaryHDU(data=np.zeros([10,10], dtype='float32'))
+header = hdu.header
 header['NAXIS1'] = shape_out[0]
 header['NAXIS2'] = shape_out[0]
 if not os.path.exists('gc_vphas_mosaic_halpha.fits'):
-    header.tofile('gc_vphas_mosaic_halpha.fits')
+    #hdu.writeto('gc_vphas_mosaic_halpha.fits', overwrite=True, output_verify='fix')
+    header.tofile('gc_vphas_mosaic_halpha.fits', overwrite=True)
 if not os.path.exists('gc_vphas_mosaic_halpha_coverage.fits'):
-    header.tofile('gc_vphas_mosaic_halpha_coverage.fits')
+    #hdu.writeto('gc_vphas_mosaic_halpha_coverage.fits', overwrite=True, output_verify='fix')
+    header.tofile('gc_vphas_mosaic_halpha_coverage.fits', overwrite=True)
 
 output_file = fits.open('gc_vphas_mosaic_halpha.fits', mode='update', output_verify='fix')
 if output_file[0].data.shape != shape_out:
@@ -77,6 +79,8 @@ if output_coverage[0].data.shape != shape_out:
     output_coverage = fits.open('gc_vphas_mosaic_halpha_coverage.fits', mode='update', output_verify='fix')
 
 
+final_array.header.update(wcs_out.to_header())
+final_array_footprint.header.update(wcs_out.to_header())
 final_array = output_file[0].data
 final_footprint = output_coverage[0].data
 
