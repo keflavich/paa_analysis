@@ -7,7 +7,8 @@ from glue.core.state import load
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-matplotlib.use('Agg')
+plt.ion()
+#matplotlib.use('Agg')
 
 ### Set up data
 
@@ -78,4 +79,4 @@ ax.tick_params('y', labelsize=12)
 
 # Save figure
 fig.savefig('paa_cont_colorcolor.pdf', bbox_inches='tight')
-plt.close(fig)
+#plt.close(fig)
