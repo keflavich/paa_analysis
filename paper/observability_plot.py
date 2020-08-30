@@ -62,7 +62,11 @@ coordgrid = coordinates.SkyCoord(ellgrid*u.deg, beegrid*u.deg, frame='galactic')
 lmc = coordinates.SkyCoord.from_name('LMC').galactic
 ax.scatter(lmc.l, lmc.b, transform=transform, s=500, marker='o', facecolor=(1,0.5,0,0.3), edgecolor='none')
 
+ngc6503 = coordinates.SkyCoord.from_name('ngc6503').galactic
+ax.scatter(ngc6503.l, ngc6503.b, transform=transform, s=500, marker='o', facecolor=(1,0,0.5,0.3), edgecolor='none')
+
 months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+
 for thistime,sunpos in zip(times, sun):
     sep = coordgrid.separation(sunpos)
     ell, bee = sunpos.l, sunpos.b
@@ -78,7 +82,7 @@ for thistime,sunpos in zip(times, sun):
     pl.draw()
     pl.show()
     pl.pause(0.01)
-    fig.savefig(f'observable_zone_{month}.png', bbox_inches='tight')
+    fig.savefig(f'figures/observable_zone_{month}.png', bbox_inches='tight')
 
     sc.set_visible(False)
     for cc in con.collections:
