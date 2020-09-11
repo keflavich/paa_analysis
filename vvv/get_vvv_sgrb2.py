@@ -19,13 +19,14 @@ from astropy.utils.console import ProgressBar
 
 from astroquery.eso import Eso
 
-files = glob.glob("*ADP*fits*")
-if len(files) < 732:
+files = glob.glob("*ADP*fits*fz")
+if len(files) < 644:
     Eso.ROW_LIMIT = 10000
     Eso.cache_location = '.'
     Eso.login()
 
-    tbl = Eso.query_surveys(surveys='VVV', coord1=0.68, coord2=0, coord_sys='gal', box=1*u.deg)
+    tbl = Eso.query_surveys(surveys='VVV', coord1=0.68, coord2=-0.05, coord_sys='gal', box=0.2*u.deg)
+    tbl = tbl[tbl['Filter'] == 'Ks']
     files = Eso.retrieve_data(tbl['ARCFILE'])
 
 #wcs_out, shape_out = find_optimal_celestial_wcs([h[1] for h in hdus], frame='galactic')
@@ -33,11 +34,11 @@ if len(files) < 732:
 wcs_out = wcs.WCS({"CTYPE1": "GLON-CAR",
                    "CTYPE2": "GLAT-CAR",
                    "CRPIX1": 2000.0,
-                   "CRPIX2": 2000.0,
-                   "CRVAL1": 0.68,
+                   "CRPIX2": 3800.0,
+                   "CRVAL1": 0.64,
                    "CRVAL2": 0.0,
-                   "CDELT1": -0.25/3600., # 0.25" pixels
-                   "CDELT2": 0.25/3600.,
+                   "CDELT1": -0.1/3600., # 0.1" pixels
+                   "CDELT2": 0.1/3600.,
                    "CUNIT1": "deg",
                    "CUNIT2": "deg",
                   })
@@ -45,34 +46,36 @@ shape_out = (4000,4000)
 
 # [hdu for h in hdus for hdu in h[1:]]
 #array_line, footprint = reproject_and_coadd(hdus, wcs_out, shape_out=shape_out, reproject_function=reproject_interp)
-#fits.PrimaryHDU(data=array_line, header=wcs_out.to_header()).writeto('sgrb2_vvv_mosaic_kband.fits', overwrite=True)
+#fits.PrimaryHDU(data=array_line, header=wcs_out.to_header()).writeto('sgrb2ds_vvv_mosaic_kband.fits', overwrite=True)
 
-hdu = fits.PrimaryHDU(data=np.zeros([10,10], dtype='float32'))
+hdu = fits.PrimaryHDU(data=np.zeros([4000,4000], dtype='float32'))
 header = hdu.header
 header['NAXIS1'] = shape_out[0]
-header['NAXIS2'] = shape_out[0]
-if not os.path.exists('sgrb2_vvv_mosaic_kband.fits'):
-    #hdu.writeto('sgrb2_vvv_mosaic_kband.fits', overwrite=True, output_verify='fix')
-    header.tofile('sgrb2_vvv_mosaic_kband.fits', overwrite=True)
-if not os.path.exists('sgrb2_vvv_mosaic_kband_coverage.fits'):
-    #hdu.writeto('sgrb2_vvv_mosaic_kband_coverage.fits', overwrite=True, output_verify='fix')
-    header.tofile('sgrb2_vvv_mosaic_kband_coverage.fits', overwrite=True)
-
-output_file = fits.open('sgrb2_vvv_mosaic_kband.fits', mode='update', output_verify='fix')
-if output_file[0].data.shape != shape_out:
-    output_file.close()
-    with open('sgrb2_vvv_mosaic_kband.fits', 'rb+') as fobj:
-        fobj.seek(len(header.tostring()) + (shape_out[0] * shape_out[1] * 4) - 1)
-        fobj.write(b'\0')
-    output_file = fits.open('sgrb2_vvv_mosaic_kband.fits', mode='update', output_verify='fix')
-
-output_coverage = fits.open('sgrb2_vvv_mosaic_kband_coverage.fits', mode='update', output_verify='fix')
-if output_coverage[0].data.shape != shape_out:
-    output_coverage.close()
-    with open('sgrb2_vvv_mosaic_kband_coverage.fits', 'rb+') as fobj:
-        fobj.seek(len(header.tostring()) + (shape_out[0] * shape_out[1] * 4) - 1)
-        fobj.write(b'\0')
-    output_coverage = fits.open('sgrb2_vvv_mosaic_kband_coverage.fits', mode='update', output_verify='fix')
+header['NAXIS2'] = shape_out[1]
+hdu.writeto('sgrb2ds_vvv_mosaic_kband.fits', overwrite=True)
+hdu.writeto('sgrb2ds_vvv_mosaic_kband_coverage.fits', overwrite=True)
+#if not os.path.exists('sgrb2ds_vvv_mosaic_kband.fits'):
+#    #hdu.writeto('sgrb2ds_vvv_mosaic_kband.fits', overwrite=True, output_verify='fix')
+#    header.tofile('sgrb2ds_vvv_mosaic_kband.fits', overwrite=True)
+#if not os.path.exists('sgrb2ds_vvv_mosaic_kband_coverage.fits'):
+#    #hdu.writeto('sgrb2ds_vvv_mosaic_kband_coverage.fits', overwrite=True, output_verify='fix')
+#    header.tofile('sgrb2ds_vvv_mosaic_kband_coverage.fits', overwrite=True)
+#
+output_file = fits.open('sgrb2ds_vvv_mosaic_kband.fits', mode='update', output_verify='fix')
+#if output_file[0].data.shape != shape_out:
+#    output_file.close()
+#    with open('sgrb2ds_vvv_mosaic_kband.fits', 'rb+') as fobj:
+#        fobj.seek(len(header.tostring()) + (shape_out[0] * shape_out[1] * 4) - 1)
+#        fobj.write(b'\0')
+#    output_file = fits.open('sgrb2ds_vvv_mosaic_kband.fits', mode='update', output_verify='fix')
+#
+output_coverage = fits.open('sgrb2ds_vvv_mosaic_kband_coverage.fits', mode='update', output_verify='fix')
+#if output_coverage[0].data.shape != shape_out:
+#    output_coverage.close()
+#    with open('sgrb2ds_vvv_mosaic_kband_coverage.fits', 'rb+') as fobj:
+#        fobj.seek(len(header.tostring()) + (shape_out[0] * shape_out[1] * 4) - 1)
+#        fobj.write(b'\0')
+#    output_coverage = fits.open('sgrb2ds_vvv_mosaic_kband_coverage.fits', mode='update', output_verify='fix')
 
 
 output_file[0].header.update(wcs_out.to_header())
@@ -104,10 +107,10 @@ arrays = []
 #        for h in (fits.open(x)
 #                  for x in glob.glob("ADP*.fits*"))
 #        for hdu in h if 'CRVAL1' in hdu.header and (260 < hdu.header['CRVAL1'] < 270)]
-for fn in ProgressBar(glob.glob("ADP*fits*")):
+for fn in ProgressBar(glob.glob("ADP*fits*fz")):
     hdul = fits.open(fn)
     for hdu in hdul:
-        if not hasattr(hdu, 'data') or ('CRVAL1' not in hdu.header) or (not (260 < hdu.header['CRVAL1'] < 270)):
+        if not hasattr(hdu, 'data') or ('CRVAL1' not in hdu.header):
             continue
 
         # We need to pre-parse the data here since we need to figure out how to
@@ -181,3 +184,4 @@ for fn in ProgressBar(glob.glob("ADP*fits*")):
 
 final_array /= final_footprint
 output_file.close()
+output_coverage.close()
