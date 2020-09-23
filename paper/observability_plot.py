@@ -78,12 +78,12 @@ ax.contourf(smlmc, levels=[13, 30, 1e4], transform=lmc_transform, colors=[(1,165
 ngc6503 = coordinates.SkyCoord.from_name('ngc6503').galactic
 ax.scatter(ngc6503.l, ngc6503.b, transform=transform, s=500, marker='o', facecolor=(1,0,0.5,0.3), edgecolor='none')
 
-m33 = coordinates.SkyCoord.from_name('M33').galactic
-ax.scatter(m33.l, m33.b, transform=transform, s=100, marker='s', facecolor=(0,1,0.1,0.4), edgecolor='none')
-wlm = coordinates.SkyCoord.from_name('WLM Galaxy').galactic
-ax.scatter(wlm.l, wlm.b, transform=transform, s=100, marker='s', facecolor=(0,0.1,1,0.4), edgecolor='none')
-ngc6822 = coordinates.SkyCoord.from_name('NGC 6822').galactic
-ax.scatter(ngc6822.l, ngc6822.b, transform=transform, s=100, marker='s', facecolor=(1,0.1,0,0.4), edgecolor='none')
+# m33 = coordinates.SkyCoord.from_name('M33').galactic
+# ax.scatter(m33.l, m33.b, transform=transform, s=100, marker='s', facecolor=(0,1,0.1,0.4), edgecolor='none')
+# wlm = coordinates.SkyCoord.from_name('WLM Galaxy').galactic
+# ax.scatter(wlm.l, wlm.b, transform=transform, s=100, marker='s', facecolor=(0,0.1,1,0.4), edgecolor='none')
+# ngc6822 = coordinates.SkyCoord.from_name('NGC 6822').galactic
+# ax.scatter(ngc6822.l, ngc6822.b, transform=transform, s=100, marker='s', facecolor=(1,0.1,0,0.4), edgecolor='none')
 
 ax.plot([50,50,2.5,2.5,-2.5,-2.5,-50,-50, -2.5, -2.5, 2.5, 2.5, 50], [1, -1, -1, -5, -5, -1, -1, 1, 1, 5, 5, 1, 1], transform=transform, color='r')
 
@@ -100,11 +100,13 @@ for thistime,sunpos in zip(times, sun):
     month = months[thistime.ymdhms.month-1]
     print(month, thistime, thistime.ymdhms)
     #ax.set_title(month)
+    txt = ax.text(0.2, 0.7, month, transform=fig.transFigure)
     pl.axis(axlims)
     pl.draw()
     pl.show()
     pl.pause(0.01)
     fig.savefig(f'figures/observable_zone_{month}.png', bbox_inches='tight')
+    txt.set_visible(False)
 
     sc.set_visible(False)
     for cc in con.collections:
