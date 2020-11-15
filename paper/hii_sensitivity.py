@@ -40,6 +40,7 @@ paa_to_hb_1e4 = 0.336
 ha_to_hb_1e4 = 2.86
 hg_to_hb_1e4 = 0.469
 pab_to_hgamma_1e4 = 0.347
+bra_to_hgamma_1e4 = 0.169
 
 def alpha_paa(Te=1e4*u.K):
     return alpha_eff(Te, line='beta') * paa_to_hb_1e4 * (wl_hbeta / wl_paa)

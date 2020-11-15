@@ -1,10 +1,15 @@
 import numpy as np
 from astropy import units as u
 from astropy import constants
-import sensitivity
-from hii_sensitivity import ha_to_hb_1e4, paa_to_hb_1e4, bra_to_hgamma_1e4, pab_to_hgamma_1e4, hg_to_hb_1e4
+from sensitivity import cardelli_law
+from pyspeckit.spectrum.models import hydrogen
+from hii_sensitivity import ha_to_hb_1e4, paa_to_hb_1e4, bra_to_hgamma_1e4, pab_to_hgamma_1e4, hg_to_hb_1e4, wl_paa
+
+wl_bra = hydrogen.wavelength['bracketta']*u.um
 
 def lacc(mdot, rstar=u.R_sun, mstar=u.M_sun):
+    # Alcala+ 2017 eqn 1
+    # 1.25 comes from assuming r_inner disk = 5 r_star
     return (mdot / 1.25 * constants.G * mstar / rstar).to(u.L_sun)
 
 def log_pab(lacc):
@@ -25,9 +30,15 @@ def log_bra(lacc):
 def L_paa(lacc):
     return 10**log_paa(lacc) * u.L_sun
 
+def L_bra(lacc):
+    return 10**log_bra(lacc) * u.L_sun
+
 def S_paa(lacc, distance=8*u.kpc):
-    # I think this is wrong; I probably got a unit wrong above
     return (L_paa(lacc) / (4*np.pi*distance**2)).to(u.erg/u.s/u.cm**2)
+
+def S_bra(lacc, distance=8*u.kpc):
+    return (L_bra(lacc) / (4*np.pi*distance**2)).to(u.erg/u.s/u.cm**2)
+
 
 if __name__ == "__main__":
 
@@ -46,10 +57,30 @@ if __name__ == "__main__":
     jwst_paa_central_wavelength = (jwst_paa_tr['Wavelength'].quantity * jwst_paa_tr['Transmission'].quantity).sum() / jwst_paa_tr['Transmission'].quantity.sum()
     jwst_paa_effectivewidth_hz = (jwst_paa_effectivewidth / jwst_paa_central_wavelength) * jwst_paa_central_wavelength.to(u.Hz, u.spectral())
 
+    jwst_bra_tr = SvoFps.get_transmission_data('JWST/NIRCam.F405N')
+    jwst_bra_effectivewidth = (np.diff(jwst_bra_tr['Wavelength'].quantity) * jwst_bra_tr['Transmission'].quantity[1:]).sum() / jwst_bra_tr['Transmission'].quantity[1:].max()
+    jwst_bra_central_wavelength = (jwst_bra_tr['Wavelength'].quantity * jwst_bra_tr['Transmission'].quantity).sum() / jwst_bra_tr['Transmission'].quantity.sum()
+    jwst_bra_effectivewidth_hz = (jwst_bra_effectivewidth / jwst_bra_central_wavelength) * jwst_bra_central_wavelength.to(u.Hz, u.spectral())
+
 
     pl.clf()
     mdot = np.logspace(-10, -5)*u.M_sun/u.yr
     lacc_vals = lacc(mdot)
     spaa = S_paa(lacc_vals, distance=8.2*u.kpc)
+    sbra = S_bra(lacc_vals, distance=8.2*u.kpc)
 
     spaa_mJy = (spaa / jwst_paa_effectivewidth_hz).to(u.mJy)
+    sbra_mJy = (sbra / jwst_paa_effectivewidth_hz).to(u.mJy)
+
+    pl.loglog(mdot, spaa, label='Pa$\\alpha$')
+    pl.loglog(mdot, sbra, label='Br$\\alpha$')
+
+    pl.xlabel(f'$\\dot{{M}} [M_\odot]$')
+    pl.ylabel("Source Flux [erg s$^{-1}$ cm$^{-2}$]")
+    pl.legend(loc='best')
+
+    #mag_paa_brighter = 2.5*np.log10(ha_to_paa_1e4_phots) / (cardelli_law(wl_halpha) - cardelli_law(wl_paa))
+    #print(f"Magnitude at which PaA is brighter than H-alpha is {mag_paa_brighter}")
+
+
+    print(cardelli_law(wl_bra) - cardelli_law(wl_paa))
