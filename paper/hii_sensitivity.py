@@ -34,14 +34,17 @@ def alpha_eff(Te=1e4*u.K, line='beta'):
     elif line == 'beta':
         return 3.03e-14 * T4**(-0.874-0.058*np.log(T4)) * u.cm**3*u.s**-1
 
-hb_to_paa_1e4 = 0.336
-# both of these are used, which definitely is confusing
-hb_to_ha_1e4 = 2.86
+# ratio of paa to hbeta
+paa_to_hb_1e4 = 0.336
+# ratio of H-alpha to H-beta
 ha_to_hb_1e4 = 2.86
-def alpha_paa(Te=1e4*u.K):
-    return alpha_eff(Te, line='beta') * hb_to_paa_1e4 * (wl_hbeta / wl_paa)
+hg_to_hb_1e4 = 0.469
+pab_to_hgamma_1e4 = 0.347
 
-ha_to_paa_1e4 = hb_to_ha_1e4 / hb_to_paa_1e4
+def alpha_paa(Te=1e4*u.K):
+    return alpha_eff(Te, line='beta') * paa_to_hb_1e4 * (wl_hbeta / wl_paa)
+
+ha_to_paa_1e4 = ha_to_hb_1e4 / paa_to_hb_1e4
 ha_to_paa_1e4_phots = (e_halpha/e_paa)**-1 * ha_to_paa_1e4
 
 
@@ -68,7 +71,7 @@ def snu_paa(Te=10000*u.K, EM=EMfunc(alpha_b=alpha_b_1e4), angular_area=4*np.pi*u
     # temperature dependence factor: jhb ~ alpha, so this accounts for the T-dependence of j
     # (which is not explicitly given in Draine)
     alpha_rel = alpha_eff(Te=Te, line='beta') / alpha_b_beta_1e4
-    jhb_4p = 1.24e-25 * u.erg * u.cm**3 / u.s * hb_to_paa_1e4 * alpha_rel
+    jhb_4p = 1.24e-25 * u.erg * u.cm**3 / u.s * paa_to_hb_1e4 * alpha_rel
     flux = EM * jhb_4p
     return flux / angular_area
 
@@ -83,13 +86,13 @@ def snu_paa_try2(Te=1e4*u.K, EM=EMfunc(alpha_b=alpha_b_1e4), angular_area=4*np.p
 
 def em_of_snu_paa(snu_per_sr, Te=1e4*u.K, angular_area=4*np.pi*u.sr):
     alpha_rel = alpha_eff(Te=Te, line='beta') / alpha_b_beta_1e4
-    jpa_4p = 1.24e-25 * u.erg * u.cm**3 / u.s * hb_to_paa_1e4 * alpha_rel
+    jpa_4p = 1.24e-25 * u.erg * u.cm**3 / u.s * paa_to_hb_1e4 * alpha_rel
     EM = (snu_per_sr).to(sb_unit) * angular_area / jpa_4p
     return EM.to(u.cm**-6*u.pc)
 
 def em_of_snu_halpha(snu_per_sr, Te=1e4*u.K, angular_area=4*np.pi*u.sr):
     alpha_rel = alpha_eff(Te=Te, line='alpha') / alpha_b_beta_1e4
-    jha_4p = 1.24e-25 * u.erg * u.cm**3 / u.s * hb_to_ha_1e4 * alpha_rel
+    jha_4p = 1.24e-25 * u.erg * u.cm**3 / u.s * ha_to_hb_1e4 * alpha_rel
     EM = (snu_per_sr).to(sb_unit) * angular_area / jha_4p
     return EM.to(u.cm**-6*u.pc)
 
