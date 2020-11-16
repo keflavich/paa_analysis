@@ -4,8 +4,11 @@ from astropy import constants
 from sensitivity import cardelli_law
 from pyspeckit.spectrum.models import hydrogen
 from hii_sensitivity import ha_to_hb_1e4, paa_to_hb_1e4, bra_to_hgamma_1e4, pab_to_hgamma_1e4, hg_to_hb_1e4, wl_paa
+from astroquery.svo_fps import SvoFps
 
 wl_bra = hydrogen.wavelength['bracketta']*u.um
+twomass = SvoFps.get_filter_list('2MASS')
+wl_Ks = twomass[twomass['filterID'].astype(str)=='2MASS/2MASS.Ks']['WavelengthCen'][0] * u.AA
 
 def lacc(mdot, rstar=u.R_sun, mstar=u.M_sun):
     # Alcala+ 2017 eqn 1
@@ -33,11 +36,15 @@ def L_paa(lacc):
 def L_bra(lacc):
     return 10**log_bra(lacc) * u.L_sun
 
-def S_paa(lacc, distance=8*u.kpc):
-    return (L_paa(lacc) / (4*np.pi*distance**2)).to(u.erg/u.s/u.cm**2)
+def S_paa(lacc, distance=8*u.kpc, A_K=0):
+    A_paa = (cardelli_law(wl_paa) / cardelli_law(wl_Ks)) * A_K
+    attenuation = 10**(-A_paa / 2.5)
+    return (L_paa(lacc) / (4*np.pi*distance**2)).to(u.erg/u.s/u.cm**2) * attenuation
 
-def S_bra(lacc, distance=8*u.kpc):
-    return (L_bra(lacc) / (4*np.pi*distance**2)).to(u.erg/u.s/u.cm**2)
+def S_bra(lacc, distance=8*u.kpc, A_K=0):
+    A_bra = (cardelli_law(wl_bra) / cardelli_law(wl_Ks)) * A_K
+    attenuation = 10**(-A_bra / 2.5)
+    return (L_bra(lacc) / (4*np.pi*distance**2)).to(u.erg/u.s/u.cm**2) * attenuation
 
 
 if __name__ == "__main__":
@@ -50,7 +57,6 @@ if __name__ == "__main__":
     pl.ion()
     #from astroquery.vizier import Vizier
     #tbl = Vizier(row_limit=1e7, columns=['**']).get_catalogs('J/A+A/537/A146/iso')[0]
-    from astroquery.svo_fps import SvoFps
 
     jwst_paa_tr = SvoFps.get_transmission_data('JWST/NIRCam.F187N')
     jwst_paa_effectivewidth = (np.diff(jwst_paa_tr['Wavelength'].quantity) * jwst_paa_tr['Transmission'].quantity[1:]).sum() / jwst_paa_tr['Transmission'].quantity[1:].max()
@@ -63,17 +69,28 @@ if __name__ == "__main__":
     jwst_bra_effectivewidth_hz = (jwst_bra_effectivewidth / jwst_bra_central_wavelength) * jwst_bra_central_wavelength.to(u.Hz, u.spectral())
 
 
+    pl.figure(1)
     pl.clf()
     mdot = np.logspace(-10, -5)*u.M_sun/u.yr
     lacc_vals = lacc(mdot)
     spaa = S_paa(lacc_vals, distance=8.2*u.kpc)
     sbra = S_bra(lacc_vals, distance=8.2*u.kpc)
 
+    # values computed for 24 exposures RAPID 2 group
+    limit_10sigma_paa = 2.7e-17 * u.erg/u.s/u.cm**2
+    limit_10sigma_bra = 4.25e-17 * u.erg/u.s/u.cm**2
+
+    A_K = 2.5
+    A_paa = (cardelli_law(wl_paa) / cardelli_law(wl_Ks)) * A_K
+    A_bra = (cardelli_law(wl_bra) / cardelli_law(wl_Ks)) * A_K
+    print(f"PaA extinction:{A_paa},  BrA extinction:{A_bra} (For A_K = 2.5 mag)")
+
+    # mJy if we want to include it in the filters
     spaa_mJy = (spaa / jwst_paa_effectivewidth_hz).to(u.mJy)
     sbra_mJy = (sbra / jwst_paa_effectivewidth_hz).to(u.mJy)
 
-    pl.loglog(mdot, spaa, label='Pa$\\alpha$')
-    pl.loglog(mdot, sbra, label='Br$\\alpha$')
+    pl.loglog(mdot, spaa * 10**(-A_paa/2.5), label='Pa$\\alpha$')
+    pl.loglog(mdot, sbra * 10**(-A_bra/2.5), label='Br$\\alpha$')
 
     pl.xlabel(f'$\\dot{{M}} [M_\odot]$')
     pl.ylabel("Source Flux [erg s$^{-1}$ cm$^{-2}$]")
@@ -84,3 +101,26 @@ if __name__ == "__main__":
 
 
     print(cardelli_law(wl_bra) - cardelli_law(wl_paa))
+
+
+    pl.figure(2)
+    pl.clf()
+    ax = pl.gca()
+
+    A_Ks = np.linspace(1, 40, 100)
+    for mdot in (1e-8, 1e-6, 1e-4)*u.M_sun/u.yr:
+        line, = pl.loglog(A_Ks, S_paa(lacc(mdot), distance=8.2*u.kpc, A_K=A_Ks), color='orange')#label='Pa$\\alpha$')
+        line, = pl.loglog(A_Ks, S_bra(lacc(mdot), distance=8.2*u.kpc, A_K=A_Ks), color='blue')#label='Br$\\alpha$')
+    ax.annotate("$\dot{M}=10^{-8} \mathrm{M}_\odot$", (2, 1e-16, ))
+    ax.annotate("$\dot{M}=10^{-6} \mathrm{M}_\odot$", (2, 1e-14, ))
+    ax.annotate("$\dot{M}=10^{-4} \mathrm{M}_\odot$", (2, 5e-13, ))
+
+    pl.axhline(limit_10sigma_paa, linestyle='--', color='orange', label='Pa$\\alpha$')
+    pl.axhline(limit_10sigma_bra, linestyle=':', color='blue', label='Br$\\alpha$')
+
+    ax.set_ylim(1e-17, 2e-12)
+    ax.set_xlim(2,30)
+
+    pl.xlabel(f'$A_K$ [mag]')
+    pl.ylabel("Source Flux [erg s$^{-1}$ cm$^{-2}$]")
+    pl.legend(loc='best')
