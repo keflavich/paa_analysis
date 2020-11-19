@@ -111,9 +111,12 @@ if __name__ == "__main__":
     for mdot in (1e-8, 1e-6, 1e-4)*u.M_sun/u.yr:
         line, = pl.loglog(A_Ks, S_paa(lacc(mdot), distance=8.2*u.kpc, A_K=A_Ks), color='orange')#label='Pa$\\alpha$')
         line, = pl.loglog(A_Ks, S_bra(lacc(mdot), distance=8.2*u.kpc, A_K=A_Ks), color='blue')#label='Br$\\alpha$')
-    ax.annotate("$\dot{M}=10^{-8} \mathrm{M}_\odot$", (2, 1e-16, ))
-    ax.annotate("$\dot{M}=10^{-6} \mathrm{M}_\odot$", (2, 1e-14, ))
-    ax.annotate("$\dot{M}=10^{-4} \mathrm{M}_\odot$", (2, 5e-13, ))
+    ann = ax.annotate("$\dot{M}=10^{-8}~\mathrm{M}_\odot\mathrm{yr}^{-1}$", (2.1, 5e-17, ), rotation=-8)
+    ann.set_bbox(dict(facecolor='white', alpha=0.8, edgecolor='white'))
+    ann = ax.annotate("$\dot{M}=10^{-6}~\mathrm{M}_\odot\mathrm{yr}^{-1}$", (2.1, 5e-15, ), rotation=-7)
+    ann.set_bbox(dict(facecolor='white', alpha=0.8, edgecolor='white'))
+    ann = ax.annotate("$\dot{M}=10^{-4}~\mathrm{M}_\odot\mathrm{yr}^{-1}$", (2.1, 5e-13, ), rotation=0)
+    ann.set_bbox(dict(facecolor='white', alpha=0.8, edgecolor='white'))
 
     pl.axhline(limit_10sigma_paa, linestyle='--', color='orange', label='Pa$\\alpha$')
     pl.axhline(limit_10sigma_bra, linestyle=':', color='blue', label='Br$\\alpha$')
@@ -124,3 +127,5 @@ if __name__ == "__main__":
     pl.xlabel(f'$A_K$ [mag]')
     pl.ylabel("Source Flux [erg s$^{-1}$ cm$^{-2}$]")
     pl.legend(loc='best')
+    pl.savefig("accretion_sensitivity_PaA_BrA.png", bbox_inches='tight')
+    pl.savefig("accretion_sensitivity_PaA_BrA.pdf", bbox_inches='tight')

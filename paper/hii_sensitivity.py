@@ -25,6 +25,9 @@ wl_halpha = hydrogen.wavelength['balmera']*u.um
 nu_halpha = wl_halpha.to(u.Hz, u.spectral())
 e_halpha = wl_halpha.to(u.erg, u.spectral())
 
+wl_bra = hydrogen.wavelength['bracketta']*u.um
+e_bra = wl_bra.to(u.erg, u.spectral())
+nu_bra = wl_bra.to(u.Hz, u.spectral())
 
 def alpha_eff(Te=1e4*u.K, line='beta'):
     """ H-alpha recombination coefficient.  eqn 14.8, 14.9 in draine 2001"""
@@ -41,9 +44,13 @@ ha_to_hb_1e4 = 2.86
 hg_to_hb_1e4 = 0.469
 pab_to_hgamma_1e4 = 0.347
 bra_to_hgamma_1e4 = 0.169
+bra_to_hb_1e4 = bra_to_hgamma_1e4 * hg_to_hb_1e4
 
 def alpha_paa(Te=1e4*u.K):
     return alpha_eff(Te, line='beta') * paa_to_hb_1e4 * (wl_hbeta / wl_paa)
+
+def alpha_bra(Te=1e4*u.K):
+    return alpha_eff(Te, line='beta') * bra_to_hb_1e4 * (wl_hbeta / wl_bra)
 
 ha_to_paa_1e4 = ha_to_hb_1e4 / paa_to_hb_1e4
 ha_to_paa_1e4_phots = (e_halpha/e_paa)**-1 * ha_to_paa_1e4
@@ -83,6 +90,15 @@ def snu_paa_try2(Te=1e4*u.K, EM=EMfunc(alpha_b=alpha_b_1e4), angular_area=4*np.p
     jpa_4p = alpha_paa(Te=Te) * e_paa * 4*np.pi
     assert jpa_4p.unit.is_equivalent(u.erg * u.cm**3 / u.s)
     flux = EM * jpa_4p
+    return flux / angular_area
+
+def snu_bra(Te=1e4*u.K, EM=EMfunc(alpha_b=alpha_b_1e4), angular_area=4*np.pi*u.sr):
+    """
+    copied from snu_paa_try2
+    """
+    jbra_4p = alpha_bra(Te=Te) * e_bra * 4*np.pi
+    assert jbra_4p.unit.is_equivalent(u.erg * u.cm**3 / u.s)
+    flux = EM * jbra_4p
     return flux / angular_area
 
 def em_of_snu_paa(snu_per_sr, Te=1e4*u.K, angular_area=4*np.pi*u.sr):
@@ -146,7 +162,7 @@ if __name__ == "__main__":
     # A_halpha/A_V * A_V - A_paa/A_V * A_V = m_halpha - m_paa = -2.5 np.log10 (ha_to_paa_1e4_phots)
     # A_V = -2.5*np.log10(ha(cl_ha - cl_paa)
     mag_paa_brighter = 2.5*np.log10(ha_to_paa_1e4_phots) / (cardelli_law(wl_halpha) - cardelli_law(wl_paa))
-    print(f"Magnitude at which PaA is bright is {mag_paa_brighter}")
+    print(f"Magnitude at which PaA is brighter than HA in photon cts is {mag_paa_brighter}")
 
     np.testing.assert_almost_equal(snu_paa(Te=1e4*u.K, EM=1e6*u.cm**-6*u.pc).to(u.erg/u.s/u.cm**2/u.sr).value,
                                    0.01023061)
