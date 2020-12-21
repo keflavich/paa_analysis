@@ -210,6 +210,7 @@ if __name__ == "__main__":
     pl.xlabel("Distance (kpc)")
     pl.legend(loc='best')
     pl.savefig("figures/HII_region_sensitivity.pdf", bbox_inches='tight')
+    pl.savefig("figures/HII_region_sensitivity.png", bbox_inches='tight')
 
 
 
@@ -235,6 +236,7 @@ if __name__ == "__main__":
     pl.xlabel("Q$_{LyC}$ [ph s$^{-1}$]")
     pl.ylabel("Pa$\\alpha$ Surface Brightness\n[erg s$^{-1}$ cm$^{-2}$ as$^{-2}$]")
     fig4.savefig(os.path.expanduser("figures/extended_HII_region_detectability.pdf"), bbox_inches='tight')
+    fig4.savefig(os.path.expanduser("figures/extended_HII_region_detectability.png"), bbox_inches='tight')
 
     #not a fair comparison
     # fig5 = pl.figure(5, figsize=(10,8))

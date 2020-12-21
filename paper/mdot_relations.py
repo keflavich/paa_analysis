@@ -69,3 +69,4 @@ if __name__ == "__main__":
 
     pl.legend(loc='best', fontsize=14)
     pl.savefig("figures/accretion_rate_sensitivity.pdf", bbox_inches='tight')
+    pl.savefig("figures/accretion_rate_sensitivity.png", bbox_inches='tight')

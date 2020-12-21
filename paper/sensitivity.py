@@ -267,6 +267,8 @@ def cardelli_law(wavelength, RV=3):
     A_lambda = a + b / RV
     return A_lambda
 
+def indebetouw_law(wavelength, A_K):
+    return A_K * 10**(0.61 - 2.22 * np.log10(wavelength / u.um) + 1.21 * np.log10(wavelength/u.um)**2)
 
 
 

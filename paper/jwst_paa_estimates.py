@@ -46,6 +46,26 @@ def S_bra(lacc, distance=8*u.kpc, A_K=0):
     attenuation = 10**(-A_bra / 2.5)
     return (L_bra(lacc) / (4*np.pi*distance**2)).to(u.erg/u.s/u.cm**2) * attenuation
 
+def extinction_of_lineratio(observed_lineratio):
+    paa_to_bra = paa_to_hb_1e4 / hg_to_hb_1e4 / bra_to_hgamma_1e4
+    """
+    observed = F_paa / F_bra = F_int,paa atten_paa / (F_int,bra atten_bra)
+    intrinsic = F_int,paa / F_int,bra
+    atten = 10^-(A/2.5)
+    observed = 10^(-a_paa / 2.5) / 10^(-a_bra / 2.5) * intrinsic
+    observed / intrinsic = 10^(-(a_paa - a bra) / 2.5)
+    log( observed / intrinsic ) = -(a_paa - a_bra) / 2.5
+    """
+    delta_A = -2.5 * np.log10(observed_lineratio / paa_to_bra)
+    """
+    a_paa = ccm(1.87) / ccm(2.16) * A_K
+    a_pbra = ccm(4.05) / ccm(2.16) * A_K
+    a_paa - a_bra = (ccm(1.87) - ccm(4.05)) / ccm(2.16) * A_K
+    A_K = (a_paa - a_bra) * ccm(2.16) / (ccm(1.87) - ccm(4.05))
+    A_K = delta_A * ccm(2.16) / (ccm(1.87) - ccm(4.05))
+    """
+    A_K = delta_A * cardelli_law(wl_Ks) / (cardelli_law(wl_paa) - cardelli_law(wl_bra))
+    return A_K
 
 if __name__ == "__main__":
 
@@ -57,6 +77,9 @@ if __name__ == "__main__":
     pl.ion()
     #from astroquery.vizier import Vizier
     #tbl = Vizier(row_limit=1e7, columns=['**']).get_catalogs('J/A+A/537/A146/iso')[0]
+
+    print(f"A_K = {extinction_of_lineratio(1):0.2f}")
+    print(f"A_K = {extinction_of_lineratio(4.23):0.2f}")
 
     jwst_paa_tr = SvoFps.get_transmission_data('JWST/NIRCam.F187N')
     jwst_paa_effectivewidth = (np.diff(jwst_paa_tr['Wavelength'].quantity) * jwst_paa_tr['Transmission'].quantity[1:]).sum() / jwst_paa_tr['Transmission'].quantity[1:].max()
