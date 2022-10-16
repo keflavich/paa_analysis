@@ -20,7 +20,26 @@ if not os.path.exists(fn):
 dir = os.path.splitext(fn)[0]
 if not os.path.exists(dir):
     with tarfile.open(fn) as tf:
-        tf.extractall()
+        def is_within_directory(directory, target):
+            
+            abs_directory = os.path.abspath(directory)
+            abs_target = os.path.abspath(target)
+        
+            prefix = os.path.commonprefix([abs_directory, abs_target])
+            
+            return prefix == abs_directory
+        
+        def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+        
+            for member in tar.getmembers():
+                member_path = os.path.join(path, member.name)
+                if not is_within_directory(path, member_path):
+                    raise Exception("Attempted Path Traversal in Tar File")
+        
+            tar.extractall(path, members, numeric_owner=numeric_owner) 
+            
+        
+        safe_extract(tf)
 
 from astroquery.svo_fps import SvoFps
 jcurve = SvoFps.get_transmission_data('2MASS/2MASS.J')
