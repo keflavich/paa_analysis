@@ -103,6 +103,10 @@ if __name__ == "__main__":
     limit_10sigma_paa = 2.7e-17 * u.erg/u.s/u.cm**2
     limit_10sigma_bra = 4.25e-17 * u.erg/u.s/u.cm**2
 
+    # values computed for 24 exposures MEDIUM2 4-group
+    limit_10sigma_paa = 5e-18 * u.erg/u.s/u.cm**2
+    limit_10sigma_bra = 2.1e-18 * u.erg/u.s/u.cm**2
+
     A_K = 2.5
     A_paa = (cardelli_law(wl_paa) / cardelli_law(wl_Ks)) * A_K
     A_bra = (cardelli_law(wl_bra) / cardelli_law(wl_Ks)) * A_K
@@ -130,25 +134,35 @@ if __name__ == "__main__":
     pl.clf()
     ax = pl.gca()
 
-    A_Ks = np.linspace(1, 40, 100)
-    for mdot in (1e-8, 1e-6, 1e-4)*u.M_sun/u.yr:
-        line, = pl.loglog(A_Ks, S_paa(lacc(mdot), distance=8.2*u.kpc, A_K=A_Ks), color='orange')#label='Pa$\\alpha$')
-        line, = pl.loglog(A_Ks, S_bra(lacc(mdot), distance=8.2*u.kpc, A_K=A_Ks), color='blue')#label='Br$\\alpha$')
-    ann = ax.annotate("$\dot{M}=10^{-8}~\mathrm{M}_\odot\mathrm{yr}^{-1}$", (2.1, 5e-17, ), rotation=-8)
-    ann.set_bbox(dict(facecolor='white', alpha=0.8, edgecolor='white'))
-    ann = ax.annotate("$\dot{M}=10^{-6}~\mathrm{M}_\odot\mathrm{yr}^{-1}$", (2.1, 5e-15, ), rotation=-7)
-    ann.set_bbox(dict(facecolor='white', alpha=0.8, edgecolor='white'))
-    ann = ax.annotate("$\dot{M}=10^{-4}~\mathrm{M}_\odot\mathrm{yr}^{-1}$", (2.1, 5e-13, ), rotation=0)
-    ann.set_bbox(dict(facecolor='white', alpha=0.8, edgecolor='white'))
+    A_Ks = np.linspace(0, 40, 100)
+    for mdot,lw in zip((1e-8, 1e-6, 1e-4)*u.M_sun/u.yr, (1,2,3)):
+        line, = pl.semilogy(A_Ks, S_paa(lacc(mdot), distance=8.2*u.kpc, A_K=A_Ks), linewidth=lw, color='orange')#label='Pa$\\alpha$')
+        line, = pl.semilogy(A_Ks, S_bra(lacc(mdot), distance=8.2*u.kpc, A_K=A_Ks), linewidth=lw, color='blue')#label='Br$\\alpha$')
+    # ann = ax.annotate("$\dot{M}=10^{-8}~\mathrm{M}_\odot\mathrm{yr}^{-1}$", (2.1, 5e-17, ), rotation=-8)
+    # ann.set_bbox(dict(facecolor='white', alpha=0.8, edgecolor='white'))
+    # ann = ax.annotate("$\dot{M}=10^{-6}~\mathrm{M}_\odot\mathrm{yr}^{-1}$", (2.1, 5e-15, ), rotation=-7)
+    # ann.set_bbox(dict(facecolor='white', alpha=0.8, edgecolor='white'))
+    # ann = ax.annotate("$\dot{M}=10^{-4}~\mathrm{M}_\odot\mathrm{yr}^{-1}$", (2.1, 5e-13, ), rotation=0)
+    # ann.set_bbox(dict(facecolor='white', alpha=0.8, edgecolor='white'))
+
 
     pl.axhline(limit_10sigma_paa, linestyle='--', color='orange', label='Pa$\\alpha$')
     pl.axhline(limit_10sigma_bra, linestyle=':', color='blue', label='Br$\\alpha$')
+    pl.fill_betweenx(ax.get_ylim(), 0, 2.5, color='k', alpha=0.1)
 
-    ax.set_ylim(1e-17, 2e-12)
-    ax.set_xlim(2,30)
+    ax.plot([], [], color='k', lw=3, label=r'$\dot{M}=10^{-4}\mathrm{M}_\odot$')
+    ax.plot([], [], color='k', lw=2, label=r'$\dot{M}=10^{-6}\mathrm{M}_\odot$')
+    ax.plot([], [], color='k', lw=1, label=r'$\dot{M}=10^{-8}\mathrm{M}_\odot$')
 
-    pl.xlabel(f'$A_K$ [mag]')
+    ax.set_ylim(1e-18, 2e-12)
+    ax.set_xlim(0, 35)
+
+    pl.xlabel('$A_K$ [mag]')
     pl.ylabel("Source Flux [erg s$^{-1}$ cm$^{-2}$]")
     pl.legend(loc='best')
     pl.savefig("accretion_sensitivity_PaA_BrA.png", bbox_inches='tight')
     pl.savefig("accretion_sensitivity_PaA_BrA.pdf", bbox_inches='tight')
+
+
+    for A_K in (0, 2.5, 4, 5, 7.5, 10):
+        print(f'A_K={A_K} PaA: {S_paa(lacc(1e-8*u.M_sun/u.yr), distance=8.2*u.kpc, A_K=A_K):0.2g}; BrA: {S_bra(lacc(1e-8*u.M_sun/u.yr), distance=8.2*u.kpc, A_K=A_K):0.2g}')
